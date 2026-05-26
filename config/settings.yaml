@@ -1,0 +1,40 @@
+# TEM 平台运行时配置
+# 客户与项目元数据；ingest 时如未在文件路径上解析到客户ID/项目ID，则按 default 节回退
+
+database:
+  path: db/tem.duckdb
+
+paths:
+  raw_root: data/raw
+  output_root: data/output
+  samples_root: data/samples
+
+# 默认客户/项目，用于命令行未显式传参时的回退
+default:
+  客户ID: johnson
+  客户名称: 强生
+  项目ID: work-phone
+  项目名称: 工作手机项目
+  数据来源: 联通账单
+
+# 已纳入平台的客户清单
+clients:
+  - 客户ID: johnson
+    客户名称: 强生
+    projects:
+      - 项目ID: work-phone
+        项目名称: 工作手机项目
+      - 项目ID: ipad-esim
+        项目名称: iPad/eSIM 项目
+
+  - 客户ID: lilly
+    客户名称: 礼来
+    projects:
+      - 项目ID: work-phone
+        项目名称: 工作手机项目
+
+  - 客户ID: budweiser
+    客户名称: 百威
+    projects:
+      - 项目ID: work-phone
+        项目名称: 工作手机项目

@@ -1,0 +1,61 @@
+# TEM 规则引擎参数 - 阈值集中维护，便于按客户/项目灵活调整
+# 所有规则编号对应设计文档《一期账务底座与 TEM 通信费用管理模块详细设计 v1.1》
+
+# 超套规则 (C01-C06)
+overpackage:
+  warn_ratio: 0.05            # C05: 实际应收超过标准套餐金额 5% 标记为"超套预警"
+  default_standard_fee: null  # 资产表无标准套餐金额时的回退值，null 表示不回退
+
+# 零用量与低用量规则 (Z01-Z04)
+zero_usage:
+  consecutive_months: 3       # Z03: 连续多月零用量但仍计费 -> "长期闲置号码"
+
+low_usage:
+  voice_min_threshold: 5      # 月通话分钟数低于阈值视为低用量
+  data_gb_threshold: 0.1      # 月流量低于阈值视为低用量
+
+# 高用量规则 (H01-H04)
+high_usage:
+  use_percentile: true        # H02/H03: 无套餐阈值时按 P95 判断
+  data_gb_p95_default: null   # 留空则按月内动态计算
+  voice_min_p95_default: null
+  data_gb_hard_cap: 50        # 任意号码月流量 > 50GB 直接判高流量
+  voice_min_hard_cap: 1500    # 任意号码月通话 > 1500 分钟直接判高通话
+
+# 漫游规则
+roaming:
+  # 账单一级科目中包含以下关键字之一即判漫游
+  bill_keywords:
+    - 国际漫游
+    - 港澳台漫游
+    - 国际长途
+
+# 增值业务规则
+value_added_service:
+  # 一级科目命中以下关键字且实际应收 > 0 -> 增值业务异常 (B05)
+  bill_keywords:
+    - 增值业务费
+  # 白名单：在白名单内的二级/三级科目不算异常
+  whitelist_subjects: []
+
+# 离职后计费规则
+post_termination:
+  # 离职日期与账期月末的容差天数；> 容差且仍有账单视为异常
+  tolerance_days: 0
+
+# 事件 SLA / 未闭环规则 (EV09-EV11)
+event:
+  open_states:
+    - On-Boarding
+    - 处理中
+    - 新建
+  closed_states:
+    - Completed
+    - 已完成
+  cancelled_states:
+    - Canceled
+    - 已取消
+
+# 报表 TOP-N 默认值
+report:
+  top_n: 20

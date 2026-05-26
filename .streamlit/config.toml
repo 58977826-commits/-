@@ -1,0 +1,16 @@
+[server]
+headless = true
+port = 8501
+address = "0.0.0.0"
+
+[browser]
+gatherUsageStats = false
+
+# 主题色：中国联通品牌红
+[theme]
+base = "light"
+primaryColor = "#E60012"
+backgroundColor = "#FFFFFF"
+secondaryBackgroundColor = "#F7F7F8"
+textColor = "#1A1A1A"
+font = "sans serif"

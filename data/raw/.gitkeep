@@ -1,0 +1,4 @@
+# raw 数据投递根目录
+# 推荐目录约定：
+#   data/raw/{type}/{客户ID}/{项目ID}/{账期}/*.xlsx
+# 其中 type ∈ {usage, billing, asset, employee, event}

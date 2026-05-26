@@ -1,0 +1,44 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "tem"
+version = "0.1.0"
+description = "TEM 一期账务底座 MVP - 终端全生命周期管理平台通信费用管理模块"
+requires-python = ">=3.9"
+authors = [{ name = "诚翼畅联" }]
+readme = "README.md"
+dependencies = [
+    "duckdb>=1.0.0",
+    "pandas>=2.1.0",
+    "openpyxl>=3.1.2",
+    "pyyaml>=6.0.1",
+    "pydantic>=2.5.0",
+    "click>=8.1.7",
+    "streamlit>=1.32.0",
+    "altair>=5.2.0",
+    "python-dateutil>=2.8.2",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.4.0",
+    "pytest-cov>=4.1.0",
+    "ruff>=0.3.0",
+]
+
+[project.scripts]
+tem = "tem.cli:cli"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["tem*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
+
+[tool.ruff]
+line-length = 120
+target-version = "py39"
