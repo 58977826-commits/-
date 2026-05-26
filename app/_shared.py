@@ -458,7 +458,7 @@ _GLOBAL_CSS = f"""
   }}
 
   /* ====================================================================
-     动画粒子背景层
+     背景光晕动画层
      ==================================================================== */
   .tem-bg-fx {{
     position: fixed;
@@ -498,63 +498,7 @@ _GLOBAL_CSS = f"""
     100% {{ transform: translate3d(0, 0, 0)            scale(1);    opacity: 0.65; }}
   }}
 
-  /* ----- 24 个上升小粒子 ----- */
-  .tem-particle {{
-    position: absolute;
-    bottom: -20px;
-    width: 6px;
-    height: 6px;
-    border-radius: 50%;
-    background: radial-gradient(circle, rgba(230, 0, 18, 0.55) 0%, rgba(230, 0, 18, 0.15) 60%, transparent 80%);
-    box-shadow: 0 0 8px rgba(230, 0, 18, 0.35);
-    animation: tem-rise linear infinite;
-    will-change: transform, opacity;
-  }}
-  /* 每个粒子的 left 位置 / 大小 / 时长 / 延迟 各异 */
-  .tem-particle.p1  {{ left: 4%;  width: 5px;  height: 5px;  animation-duration: 22s; animation-delay: 0s;   }}
-  .tem-particle.p2  {{ left: 10%; width: 8px;  height: 8px;  animation-duration: 28s; animation-delay: 4s;   }}
-  .tem-particle.p3  {{ left: 16%; width: 4px;  height: 4px;  animation-duration: 18s; animation-delay: 9s;   }}
-  .tem-particle.p4  {{ left: 22%; width: 10px; height: 10px; animation-duration: 32s; animation-delay: 2s;   }}
-  .tem-particle.p5  {{ left: 28%; width: 6px;  height: 6px;  animation-duration: 24s; animation-delay: 14s;  }}
-  .tem-particle.p6  {{ left: 33%; width: 7px;  height: 7px;  animation-duration: 26s; animation-delay: 7s;   }}
-  .tem-particle.p7  {{ left: 38%; width: 4px;  height: 4px;  animation-duration: 20s; animation-delay: 11s;  }}
-  .tem-particle.p8  {{ left: 44%; width: 12px; height: 12px; animation-duration: 34s; animation-delay: 5s;   }}
-  .tem-particle.p9  {{ left: 49%; width: 5px;  height: 5px;  animation-duration: 22s; animation-delay: 16s;  }}
-  .tem-particle.p10 {{ left: 54%; width: 9px;  height: 9px;  animation-duration: 30s; animation-delay: 1s;   }}
-  .tem-particle.p11 {{ left: 59%; width: 4px;  height: 4px;  animation-duration: 18s; animation-delay: 12s;  }}
-  .tem-particle.p12 {{ left: 64%; width: 7px;  height: 7px;  animation-duration: 26s; animation-delay: 6s;   }}
-  .tem-particle.p13 {{ left: 70%; width: 5px;  height: 5px;  animation-duration: 24s; animation-delay: 18s;  }}
-  .tem-particle.p14 {{ left: 75%; width: 8px;  height: 8px;  animation-duration: 28s; animation-delay: 3s;   }}
-  .tem-particle.p15 {{ left: 80%; width: 4px;  height: 4px;  animation-duration: 20s; animation-delay: 13s;  }}
-  .tem-particle.p16 {{ left: 86%; width: 10px; height: 10px; animation-duration: 32s; animation-delay: 8s;   }}
-  .tem-particle.p17 {{ left: 92%; width: 6px;  height: 6px;  animation-duration: 23s; animation-delay: 0s;   }}
-  .tem-particle.p18 {{ left: 96%; width: 4px;  height: 4px;  animation-duration: 19s; animation-delay: 10s;  }}
-  /* 部分粒子换暖白色调，制造层次 */
-  .tem-particle.p19 {{ left: 13%; width: 7px;  height: 7px;  animation-duration: 27s; animation-delay: 15s;
-                       background: radial-gradient(circle, rgba(255, 200, 200, 0.7) 0%, transparent 75%);
-                       box-shadow: 0 0 10px rgba(255, 180, 180, 0.45); }}
-  .tem-particle.p20 {{ left: 37%; width: 9px;  height: 9px;  animation-duration: 30s; animation-delay: 20s;
-                       background: radial-gradient(circle, rgba(255, 200, 200, 0.7) 0%, transparent 75%);
-                       box-shadow: 0 0 10px rgba(255, 180, 180, 0.45); }}
-  .tem-particle.p21 {{ left: 56%; width: 8px;  height: 8px;  animation-duration: 28s; animation-delay: 6s;
-                       background: radial-gradient(circle, rgba(255, 200, 200, 0.7) 0%, transparent 75%);
-                       box-shadow: 0 0 10px rgba(255, 180, 180, 0.45); }}
-  .tem-particle.p22 {{ left: 77%; width: 7px;  height: 7px;  animation-duration: 25s; animation-delay: 17s;
-                       background: radial-gradient(circle, rgba(255, 200, 200, 0.7) 0%, transparent 75%);
-                       box-shadow: 0 0 10px rgba(255, 180, 180, 0.45); }}
-  .tem-particle.p23 {{ left: 19%; width: 6px;  height: 6px;  animation-duration: 26s; animation-delay: 21s;  }}
-  .tem-particle.p24 {{ left: 67%; width: 5px;  height: 5px;  animation-duration: 21s; animation-delay: 19s;  }}
-
-  @keyframes tem-rise {{
-    0%   {{ transform: translate3d(0, 0, 0);                     opacity: 0; }}
-    8%   {{ opacity: 1; }}
-    35%  {{ transform: translate3d(18px, -38vh, 0);              opacity: 1; }}
-    65%  {{ transform: translate3d(-22px, -72vh, 0);             opacity: 0.9; }}
-    92%  {{ opacity: 0.6; }}
-    100% {{ transform: translate3d(8px, -110vh, 0);              opacity: 0; }}
-  }}
-
-  /* 让正文层稳稳叠在粒子之上 */
+  /* 让正文层稳稳叠在背景装饰之上 */
   section[data-testid="stSidebar"], section.stMain {{
     position: relative;
     z-index: 1;
@@ -563,24 +507,12 @@ _GLOBAL_CSS = f"""
 """
 
 
-_PARTICLE_HTML = """
+_BG_FX_HTML = """
 <div class="tem-bg-fx" aria-hidden="true">
   <div class="tem-glow g1"></div>
   <div class="tem-glow g2"></div>
   <div class="tem-glow g3"></div>
   <div class="tem-glow g4"></div>
-  <div class="tem-particle p1"></div>  <div class="tem-particle p2"></div>
-  <div class="tem-particle p3"></div>  <div class="tem-particle p4"></div>
-  <div class="tem-particle p5"></div>  <div class="tem-particle p6"></div>
-  <div class="tem-particle p7"></div>  <div class="tem-particle p8"></div>
-  <div class="tem-particle p9"></div>  <div class="tem-particle p10"></div>
-  <div class="tem-particle p11"></div> <div class="tem-particle p12"></div>
-  <div class="tem-particle p13"></div> <div class="tem-particle p14"></div>
-  <div class="tem-particle p15"></div> <div class="tem-particle p16"></div>
-  <div class="tem-particle p17"></div> <div class="tem-particle p18"></div>
-  <div class="tem-particle p19"></div> <div class="tem-particle p20"></div>
-  <div class="tem-particle p21"></div> <div class="tem-particle p22"></div>
-  <div class="tem-particle p23"></div> <div class="tem-particle p24"></div>
 </div>
 """
 
@@ -588,19 +520,19 @@ _PARTICLE_HTML = """
 def apply_brand_theme(
     page_title: str = "TEM 通信费用管理",
     layout: str = "wide",
-    particles: bool = True,
+    background_fx: bool = True,
 ) -> None:
     """每个 Streamlit 页面在最顶部调用一次，应用品牌主题 + 注入 CSS。
 
     会做这些事：
       1. 设置 page 标题 / icon / layout
       2. 注入全局 CSS（联通红主题、字体、卡片、表格样式等）
-      3. 注入动画粒子背景层（可关闭）
+      3. 注入背景光晕动画层（可关闭）
       4. 隐藏 Streamlit 默认页脚 / 菜单（已通过 CSS）
 
     Args:
-      particles: 是否启用动画粒子背景，默认 True。
-                 系统会自动遵从 prefers-reduced-motion，无需在此处禁用。
+      background_fx: 是否启用背景光晕动画，默认 True。
+                     系统会自动遵从 prefers-reduced-motion，无需在此处禁用。
     """
     st.set_page_config(
         page_title=f"{page_title} · 诚翼畅联",
@@ -612,8 +544,8 @@ def apply_brand_theme(
         },
     )
     st.markdown(_GLOBAL_CSS, unsafe_allow_html=True)
-    if particles:
-        st.markdown(_PARTICLE_HTML, unsafe_allow_html=True)
+    if background_fx:
+        st.markdown(_BG_FX_HTML, unsafe_allow_html=True)
 
 
 def hero(title: str, subtitle: str, meta: str | None = None) -> None:
