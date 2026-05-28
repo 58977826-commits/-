@@ -44,7 +44,7 @@ tem init-db
 tem run --客户 johnson --项目 work-phone --账期 202604
 
 # 5. 启动看板
-streamlit run app/streamlit_app.py
+streamlit run "app/诚翼畅联数据管理平台.py"
 ```
 
 CLI 子命令一览：
@@ -85,7 +85,7 @@ CLI 子命令一览：
 │   ├── reports/exporter.py       # Excel 报表导出
 │   └── cli.py                    # 命令行入口
 ├── app/                          # Streamlit 多页看板
-│   ├── streamlit_app.py          # 首页（§15.1 月度首页）
+│   ├── 诚翼畅联数据管理平台.py      # 首页（§15.1 月度首页）
 │   └── pages/                    # 子页（§15.2 ~ §15.7 + 报表导出）
 └── tests/                        # 单元测试
 ```

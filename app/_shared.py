@@ -152,20 +152,83 @@ _GLOBAL_CSS = f"""
     color: {BRAND_RED};
   }}
 
-  /* ====== 侧边栏导航高亮 ====== */
+  /* ====== 侧边栏导航：整体边框 + 条目浅灰底 ====== */
+  section[data-testid="stSidebarNav"] ul {{
+    border: 1px solid {BRAND_LINE};
+    border-radius: 12px;
+    padding: 6px;
+    margin: 0.25rem 0 1rem 0;
+    background: rgba(255, 255, 255, 0.72);
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    list-style: none;
+  }}
+  section[data-testid="stSidebarNav"] ul > li {{
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }}
   section[data-testid="stSidebarNav"] a {{
     border-radius: 8px !important;
     transition: all 0.16s ease;
+    background: {BRAND_GREY} !important;
+    padding: 0.45rem 0.75rem !important;
+    display: flex !important;
+    align-items: center;
+    width: 100%;
+    box-sizing: border-box;
+    border: 1px solid transparent;
   }}
   section[data-testid="stSidebarNav"] a[aria-current="page"] {{
-    background: linear-gradient(90deg, {BRAND_RED_SOFT} 0%, rgba(255, 237, 239, 0.4) 100%);
+    background: linear-gradient(90deg, {BRAND_RED_SOFT} 0%, rgba(255, 237, 239, 0.55) 100%) !important;
     color: {BRAND_RED} !important;
     font-weight: 600;
     box-shadow: inset 3px 0 0 {BRAND_RED};
+    border-color: rgba(230, 0, 18, 0.12);
   }}
   section[data-testid="stSidebarNav"] a:hover {{
     color: {BRAND_RED} !important;
     transform: translateX(2px);
+    background: #EEEEF0 !important;
+  }}
+  section[data-testid="stSidebarNav"] a[aria-current="page"]:hover {{
+    background: linear-gradient(90deg, {BRAND_RED_SOFT} 0%, rgba(255, 237, 239, 0.65) 100%) !important;
+  }}
+
+  /* ====== 首页导航：诚翼畅联（醒目）+ 数据管理平台 ====== */
+  section[data-testid="stSidebarNav"] ul > li:first-child a {{
+    white-space: normal !important;
+    height: auto !important;
+    min-height: 2.6rem;
+    align-items: flex-start !important;
+    padding-top: 0.35rem !important;
+    padding-bottom: 0.35rem !important;
+  }}
+  section[data-testid="stSidebarNav"] ul > li:first-child a span {{
+    font-size: 0 !important;
+    line-height: 1.45 !important;
+  }}
+  section[data-testid="stSidebarNav"] ul > li:first-child a span::before {{
+    content: "诚翼畅联";
+    font-size: 0.95rem;
+    font-weight: 800;
+    color: {BRAND_RED};
+    letter-spacing: 0.04em;
+  }}
+  section[data-testid="stSidebarNav"] ul > li:first-child a span::after {{
+    content: "数据管理平台";
+    font-size: 0.82rem;
+    font-weight: 500;
+    color: {BRAND_INK_SOFT};
+  }}
+  section[data-testid="stSidebarNav"] ul > li:first-child a[aria-current="page"] span::before {{
+    color: {BRAND_RED_DARK};
+  }}
+  section[data-testid="stSidebarNav"] ul > li:first-child a[aria-current="page"] span::after {{
+    color: {BRAND_INK};
+    font-weight: 600;
   }}
 
   /* ====== 主按钮：联通红 + 高级光感 ====== */
@@ -589,7 +652,7 @@ def require_filters() -> bool:
     """子页通用：未选客户/项目/账期时给出友好提示。"""
     客户ID, 项目ID, 账期 = get_filters()
     if not (客户ID and 项目ID and 账期):
-        st.info("请回到 **streamlit app** 首页选择客户/项目/账期；或在 **📤 数据导入** 页上传数据后自动定位。")
+        st.info("请回到 **诚翼畅联数据管理平台** 首页选择客户/项目/账期；或在 **📤 数据导入** 页上传数据后自动定位。")
         return False
     meta = f"客户 {客户ID} · {st.session_state.get('客户名称') or ''}　/　项目 {项目ID} · {st.session_state.get('项目名称') or ''}　/　账期 {账期}"
     st.caption(meta)

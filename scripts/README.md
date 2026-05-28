@@ -65,7 +65,7 @@ python scripts/verify_results.py
    - `异常类型` 分布是否在预期范围内
    - 标准套餐金额是否如实读到（A06 风险点）
 
-5. **看板复核** —— `streamlit run app/streamlit_app.py`，选中刚跑通的客户/项目/账期，逐页核对指标。
+5. **看板复核** —— `streamlit run "app/诚翼畅联数据管理平台.py"`，选中刚跑通的客户/项目/账期，逐页核对指标。
 
 6. **导出 Excel 回交** —— `tem export --客户 X --项目 Y --账期 YYYYMM`，把 `data/output/*_TEM月报.xlsx` 提交给运营经理做人工抽检。
 
