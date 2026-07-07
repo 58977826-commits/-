@@ -22,18 +22,20 @@ for _p in (_SRC, _APP):
     if str(_p) not in sys.path:
         sys.path.insert(0, str(_p))
 
-from _shared import apply_brand_theme, section_tag  # noqa: E402
+from _shared import init_page, section_tag  # noqa: E402
 from tem.build import build_fact_tem_monthly  # noqa: E402
 from tem.config import get_settings  # noqa: E402
 from tem.db import connect  # noqa: E402
 from tem.ingest import (  # noqa: E402
     IngestContext,
+    IngestGateError,
     auto_ingest_files,
     detect_excel_file,
+    prevalidate_files,
 )
 
 
-apply_brand_theme("数据导入", layout="wide")
+init_page("数据导入", layout="wide")
 section_tag("数据接入")
 st.title("📤 数据导入")
 st.caption("拖拽 Excel / CSV 文件 → 系统自动识别属于用量 / 账单 / 资产 / 人员 / 事件中的哪一类 → 一键入库")
@@ -132,6 +134,36 @@ _TABLE_LABELS = {
 }
 
 
+def _render_gate_reports(gate_reports: list[dict]) -> None:
+    """展示 Import Gate 校验报告（导入与预检共用）。"""
+    if not gate_reports:
+        return
+    st.markdown("##### Import Gate 校验报告")
+    gate_rows = []
+    for gr in gate_reports:
+        issues = gr.get("issues", [])
+        errors = [i["message"] for i in issues if i.get("level") == "error"]
+        warns = [i["message"] for i in issues if i.get("level") == "warning"]
+        gate_rows.append({
+            "目标表": gr.get("target_table"),
+            "行数": gr.get("row_count"),
+            "通过": "是" if gr.get("passed") else "否",
+            "未映射列数": len(gr.get("unmapped_source_columns", [])),
+            "主键重复行": gr.get("duplicate_pk_count", 0),
+            "错误": "；".join(errors[:2]) or "—",
+            "警告": "；".join(warns[:2]) or "—",
+        })
+    st.dataframe(pd.DataFrame(gate_rows), use_container_width=True, hide_index=True)
+
+    with st.expander("查看 Gate 详细问题", expanded=False):
+        for gr in gate_reports:
+            st.markdown(f"**{gr.get('target_table')}** · {gr.get('row_count', 0)} 行")
+            for issue in gr.get("issues", []):
+                level = issue.get("level", "info")
+                icon = {"error": "❌", "warning": "⚠️", "info": "ℹ️"}.get(level, "·")
+                st.markdown(f"- {icon} **{issue.get('code', '')}** {issue.get('message', '')}")
+
+
 if uploaded_files:
     st.subheader("第 3 步：识别预览")
 
@@ -184,7 +216,52 @@ if uploaded_files:
     with col_b:
         do_clear_cache = st.checkbox("导入后清空看板缓存", value=True, help="强制首页 / 各报表页刷新")
 
-    if st.button("🚀 开始导入", type="primary"):
+    btn_pre, btn_import = st.columns(2)
+    with btn_pre:
+        run_precheck = st.button("🔍 导入前预检", help="只跑 Import Gate，不写库、不复制 raw 目录")
+    with btn_import:
+        run_import = st.button("🚀 开始导入", type="primary")
+
+    if run_precheck:
+        if not (客户ID and 项目ID and 账期):
+            st.error("客户 / 项目 / 账期 不能为空")
+            st.stop()
+
+        ctx = IngestContext(客户ID=客户ID, 项目ID=项目ID, 账期=账期)
+        with st.spinner("Import Gate 预检中（不写库）..."):
+            result = prevalidate_files(preview_paths, ctx)
+
+        summary = result["summary"]
+        if summary.get("would_block"):
+            st.error(
+                f"预检未通过：{summary.get('error_count', 0)} 个错误，"
+                f"{summary.get('warning_count', 0)} 个警告。"
+                " strict 模式下正式导入将被阻断。"
+            )
+        elif summary.get("passed"):
+            st.success(
+                f"✅ 预检通过：{summary.get('file_count', 0)} 个文件，"
+                f"预计 {summary.get('row_count', 0)} 行可写入"
+            )
+        else:
+            st.warning("预检完成，但未产生有效 Gate 报告，请检查文件识别结果。")
+
+        st.markdown("##### 预检文件报告")
+        precheck_df = pd.DataFrame([
+            {
+                "文件": r["file"],
+                "识别为": _TABLE_LABELS.get(r["primary_type"], "未识别"),
+                "依据": "文件名兜底" if r.get("from_filename") else "列名匹配",
+                "预检通过": "是" if r.get("precheck_passed") else "否",
+                "会阻断导入": "是" if r.get("precheck_blocked") else "否",
+                "错误": r.get("error", "—"),
+            }
+            for r in result["file_reports"]
+        ])
+        st.dataframe(precheck_df, use_container_width=True, hide_index=True)
+        _render_gate_reports(result.get("gate_reports", []))
+
+    if run_import:
         if not (客户ID and 项目ID and 账期):
             st.error("客户 / 项目 / 账期 不能为空")
             st.stop()
@@ -194,9 +271,17 @@ if uploaded_files:
             ctx = IngestContext(客户ID=客户ID, 项目ID=项目ID, 账期=账期)
 
             with st.spinner("识别 + 入库中..."):
-                result = auto_ingest_files(tmp_paths, ctx)
+                try:
+                    result = auto_ingest_files(tmp_paths, ctx)
+                except IngestGateError as e:
+                    st.error(f"Import Gate 阻断写库：{e}")
+                    for gr in e.report.issues:
+                        if gr.level == "error":
+                            st.markdown(f"- **{gr.code}** {gr.message}")
+                    st.stop()
 
             counts = result["ingest_counts"]
+            gate_reports = result.get("gate_reports", [])
             if any(v > 0 for v in counts.values()):
                 st.success(f"✅ 导入完成：{len(uploaded_files)} 个文件，{sum(counts.values())} 行入库")
             else:
@@ -222,6 +307,8 @@ if uploaded_files:
             ])
             st.dataframe(report_df, use_container_width=True, hide_index=True)
 
+            _render_gate_reports(gate_reports)
+
             if do_build and any(v > 0 for v in counts.values()):
                 with st.spinner("跑规则引擎生成 fact_tem_monthly..."):
                     n = build_fact_tem_monthly(客户ID, 项目ID, 账期)
@@ -236,7 +323,7 @@ if uploaded_files:
             st.session_state["账期"] = 账期
 
             st.info(
-                f"现在可以切换到左侧任一报表页（建议先看 **streamlit app** 首页或 **费用统计**），"
+                f"现在可以切换到左侧任一报表页（建议先看 **诚翼畅联数据管理平台** 首页或 **费用统计**），"
                 f"系统会自动定位到 `{客户ID} / {项目ID} / {账期}`"
             )
 

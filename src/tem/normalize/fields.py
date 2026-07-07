@@ -7,9 +7,39 @@
 """
 from __future__ import annotations
 
-from typing import Dict, List
+from typing import Dict, List, Tuple
 
 import pandas as pd
+
+from ..config import get_field_maps
+
+
+def _merge_alias_lists(base: List[str], extra: List[str]) -> List[str]:
+    out = list(base)
+    for item in extra:
+        if item not in out:
+            out.append(item)
+    return out
+
+
+def _merged_service_number_aliases(table: str) -> List[str]:
+    fm = get_field_maps()
+    base = list(SERVICE_NUMBER_ALIASES.get(table, []))
+    return _merge_alias_lists(base, fm.extra_service_number_aliases(table))
+
+
+def _merged_account_period_aliases() -> List[str]:
+    fm = get_field_maps()
+    return _merge_alias_lists(list(ACCOUNT_PERIOD_ALIASES), fm.extra_account_period_aliases())
+
+
+def _merged_table_aliases(table: str) -> Dict[str, List[str]]:
+    fm = get_field_maps()
+    merged = {k: list(v) for k, v in TABLE_ALIASES.get(table, {}).items()}
+    for unified, aliases in fm.extra_field_aliases(table).items():
+        merged.setdefault(unified, [])
+        merged[unified] = _merge_alias_lists(merged[unified], list(aliases))
+    return merged
 
 
 # ---------------------------------------------------------------------------
@@ -146,21 +176,30 @@ def apply_aliases(df: pd.DataFrame, table: str) -> pd.DataFrame:
       - usage / billing_list / billing_detail / asset / employee / event
 
     跨表共用字段（服务号码 / 账期 / 员工ID / 邮箱 / 员工姓名）按对应规则补加映射。
+    增量别名来自 config/field_maps.yaml。
     """
-    # 运营商 Excel 列名常带首尾空格（如同文件中的「 账期」「号码 」），先统一 strip
+    out, _ = apply_aliases_with_report(df, table)
+    return out
+
+
+def apply_aliases_with_report(df: pd.DataFrame, table: str) -> Tuple[pd.DataFrame, dict[str, str]]:
+    """apply_aliases 并返回 {源列名: 标准列名} 映射表，供 Import Gate 报告。"""
+    source_columns = [str(c) for c in df.columns]
     df = df.copy()
     df.columns = [str(c).strip() for c in df.columns]
 
     rename: Dict[str, str] = {}
+    period_aliases = _merged_account_period_aliases()
+    table_aliases = _merged_table_aliases(table)
 
     # 跨表共用字段
     if table in {"usage", "billing_list", "billing_detail", "asset"}:
+        sn_aliases = _merged_service_number_aliases(table)
         for src in df.columns:
-            if src in SERVICE_NUMBER_ALIASES.get(table, []) and src != "服务号码":
+            if src in sn_aliases and src != "服务号码":
                 rename[src] = "服务号码"
 
     if table == "event":
-        # 事件表的服务号码分三路：原始 / 新 / 副卡，三组别名互斥
         for src in df.columns:
             if src in SERVICE_NUMBER_ALIASES["event_original"] and src != "原始服务号码":
                 rename[src] = "原始服务号码"
@@ -169,37 +208,31 @@ def apply_aliases(df: pd.DataFrame, table: str) -> pd.DataFrame:
             elif src in SERVICE_NUMBER_ALIASES["event_assistant"] and src != "副卡号码":
                 rename[src] = "副卡号码"
 
-    # 账期
     if table in {"usage", "billing_list", "billing_detail"}:
         for src in df.columns:
-            if src in ACCOUNT_PERIOD_ALIASES and src != "账期":
+            if src in period_aliases and src != "账期":
                 rename[src] = "账期"
 
-    # 员工ID
     if table in {"asset", "employee", "event"}:
         for src in df.columns:
             if src in EMPLOYEE_ID_ALIASES and src != "员工ID":
-                # asset 第一阶段用"员工编号"作为来源字段保留，故不强制改名
                 if table == "asset" and src == "员工编号":
                     continue
                 rename[src] = "员工ID"
 
-    # 邮箱
     if table in {"asset", "employee"}:
         for src in df.columns:
             if src in EMAIL_ALIASES and src != "邮箱":
                 rename[src] = "邮箱"
 
-    # 员工姓名（asset.联系人 / employee.员工姓名 / event.当前使用人 各自有独立字段，不强制改名）
-    # 其他业务字段
-    for unified, aliases in TABLE_ALIASES.get(table, {}).items():
+    for unified, aliases in table_aliases.items():
         for src in df.columns:
             if src != unified and src in aliases:
                 rename[src] = unified
 
     if rename:
         df = df.rename(columns=rename)
-    return df
+    return df, rename
 
 
 def normalize_phone(value) -> str | None:

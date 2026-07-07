@@ -17,12 +17,12 @@ for _p in (SRC, APP):
     if str(_p) not in sys.path:
         sys.path.insert(0, str(_p))
 
-from _shared import apply_brand_theme, hero, section_tag  # noqa: E402
+from _shared import init_page, hero, section_tag  # noqa: E402
 from tem.config import get_settings  # noqa: E402
 from tem.db import connect  # noqa: E402
 
 
-apply_brand_theme("月度首页", layout="wide")
+init_page("月度首页", layout="wide")
 
 
 # ---------------------------------------------------------------------------

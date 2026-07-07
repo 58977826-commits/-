@@ -38,6 +38,15 @@ def cli() -> None:
     """TEM 一期账务底座 CLI."""
 
 
+@cli.command("sync-diff")
+def cmd_sync_diff() -> None:
+    """从 config/project_diff.yaml 同步项目差异规则到 DuckDB。"""
+    from .meta.project_diff import sync_project_diff_from_config
+
+    n = sync_project_diff_from_config(verbose=True)
+    click.echo(f"[sync-diff] 已同步 {n} 条规则到 meta_project_diff")
+
+
 @cli.command("init-db")
 def cmd_init_db() -> None:
     """创建/重建 DuckDB 库与 DDL。"""

@@ -10,7 +10,7 @@ from .config import REPO_ROOT, get_settings
 
 
 SQL_DIR = REPO_ROOT / "sql"
-DDL_FILES = ["001_raw_tables.sql", "002_fact_tem_monthly.sql", "003_views.sql"]
+DDL_FILES = ["001_raw_tables.sql", "002_fact_tem_monthly.sql", "003_views.sql", "004_meta_tables.sql", "005_app_users.sql"]
 
 
 def get_connection(read_only: bool = False) -> duckdb.DuckDBPyConnection:
@@ -39,6 +39,11 @@ def init_db(verbose: bool = True) -> None:
             con.execute(sql)
             if verbose:
                 print(f"[init_db] executed {fname}")
+    from .meta.project_diff import sync_project_diff_from_config
+    sync_project_diff_from_config(verbose=verbose)
+    from .auth.users import ensure_default_admin
+    if ensure_default_admin() and verbose:
+        print("[init_db] created default admin account (admin / admin)")
 
 
 def list_tables() -> list[str]:

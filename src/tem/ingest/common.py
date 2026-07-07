@@ -24,6 +24,7 @@ class IngestContext:
     数据更新时间: datetime = field(default_factory=datetime.now)
     客户名称: str | None = None
     项目名称: str | None = None
+    gate_reports: list = field(default_factory=list)
 
     def resolve_meta(self) -> "IngestContext":
         """通过 settings.yaml 补全客户/项目名称。"""
@@ -123,14 +124,37 @@ def write_dataframe(
     ctx: IngestContext,
     *,
     replace_scope: bool = True,
+    source_file: str | None = None,
+    alias_map: dict[str, str] | None = None,
+    source_columns: list[str] | None = None,
+    skip_gate: bool = False,
 ) -> int:
-    """把 df 写入 DuckDB 表。
+    """把 df 写入 DuckDB 表；写库前执行 Import Gate 校验。
 
     replace_scope=True 时按 (客户ID, 项目ID, 账期) 先删后插，避免重复。
+    strict 模式下 Gate 报错会抛出 IngestGateError，不写库。
     返回写入行数。
     """
     if df.empty:
         return 0
+
+    if not skip_gate:
+        from .gate import IngestGateError, save_import_report, validate_before_write
+
+        report = validate_before_write(
+            df, table, ctx,
+            renamed_columns=alias_map,
+            source_columns=source_columns,
+            source_file=source_file,
+        )
+        ctx.gate_reports.append(report)
+        try:
+            save_import_report(report, ctx, source_file=source_file)
+        except Exception:  # noqa: BLE001
+            pass
+        if report.blocked:
+            raise IngestGateError(report)
+
     df = align_to_table(df, table)
     with connect() as con:
         if replace_scope:

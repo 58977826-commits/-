@@ -1,0 +1,63 @@
+# TEM 字段映射与 Import Gate 规则
+# 运营可在不改代码的情况下扩展别名、必填项与主键校验策略。
+# 代码内 fields.py 保留默认别名；此处为增量覆盖与项目级扩展。
+
+import_gate:
+  # strict: 有 error 级问题时阻断写库；warn: 仅记录警告仍写入
+  mode: strict
+
+  tables:
+    usage:
+      primary_key: [客户ID, 项目ID, 账期, 服务号码]
+      required: [服务号码]
+      period_column: 账期
+      required_any: [总流量_M, 总流量_GB, 总通话时长_秒, 总通话分钟, 总短信条数]
+
+    billing_list:
+      primary_key: [客户ID, 项目ID, 账期, 服务号码]
+      required: [服务号码]
+      period_column: 账期
+      required_any: [实际应收, 计费应收]
+
+    billing_detail:
+      primary_key: [客户ID, 项目ID, 账期, 服务号码, 一级科目]
+      required: [服务号码, 一级科目]
+      period_column: 账期
+      required_any: [实际应收, 计费应收]
+
+    asset:
+      primary_key: [客户ID, 项目ID, 服务号码]
+      required: [服务号码]
+      required_any: [标准套餐金额, 联系人, 邮箱, 员工编号]
+
+    employee:
+      primary_key: [客户ID, 员工ID]
+      required: [员工ID]
+      required_any: [邮箱, 员工姓名]
+
+    event:
+      primary_key: [客户ID, 项目ID, 原始服务号码, 开始时间]
+      required: [事件类型, 事件动作]
+      required_any: [原始服务号码, 原始号码, 服务号码, 号码]
+
+# 增量字段别名（合并进 apply_aliases，不替换代码内 defaults）
+field_aliases:
+  billing_list:
+    计费应收: [月费应收, 套餐月租]
+    账户标识: [客户标识]
+  billing_detail:
+    计费应收: [月费应收]
+    账户标识: [账户编码, 客户标识]
+
+  usage:
+    服务号码: [设备号, MSISDN]
+
+# 跨表服务号码别名增量（按 ingest table 键）
+service_number_aliases:
+  billing_detail: [号码, 手机号码]
+  billing_list: [号码, 手机号码, 手机号]
+
+account_period_aliases:
+  - 月账期
+  - 账单月份
+  - 计费周期

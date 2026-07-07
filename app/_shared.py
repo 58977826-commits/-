@@ -520,6 +520,33 @@ _GLOBAL_CSS = f"""
     box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
   }}
 
+  /* ====== 登录页居中卡片 ====== */
+  .tem-login-wrap {{
+    max-width: 420px;
+    margin: 3rem auto 2rem auto;
+    padding: 2rem 2.2rem;
+    background: rgba(255, 255, 255, 0.82);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(229, 229, 234, 0.8);
+    border-radius: 16px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.06);
+  }}
+  .tem-login-title {{
+    font-size: 1.45rem;
+    font-weight: 800;
+    color: {BRAND_RED};
+    margin: 0 0 0.35rem 0;
+    text-align: center;
+  }}
+  .tem-login-sub {{
+    font-size: 0.88rem;
+    color: {BRAND_INK_SOFT};
+    text-align: center;
+    margin: 0 0 1.5rem 0;
+  }}
+
+  /* ====== 非管理员隐藏账号管理导航（由 init_page 动态注入） ====== */
+
   /* ====================================================================
      背景光晕动画层
      ==================================================================== */
@@ -585,18 +612,6 @@ def apply_brand_theme(
     layout: str = "wide",
     background_fx: bool = True,
 ) -> None:
-    """每个 Streamlit 页面在最顶部调用一次，应用品牌主题 + 注入 CSS。
-
-    会做这些事：
-      1. 设置 page 标题 / icon / layout
-      2. 注入全局 CSS（联通红主题、字体、卡片、表格样式等）
-      3. 注入背景光晕动画层（可关闭）
-      4. 隐藏 Streamlit 默认页脚 / 菜单（已通过 CSS）
-
-    Args:
-      background_fx: 是否启用背景光晕动画，默认 True。
-                     系统会自动遵从 prefers-reduced-motion，无需在此处禁用。
-    """
     st.set_page_config(
         page_title=f"{page_title} · 诚翼畅联",
         page_icon="📡",
@@ -609,6 +624,94 @@ def apply_brand_theme(
     st.markdown(_GLOBAL_CSS, unsafe_allow_html=True)
     if background_fx:
         st.markdown(_BG_FX_HTML, unsafe_allow_html=True)
+
+
+def get_current_user() -> dict | None:
+    return st.session_state.get("auth_user")
+
+
+def is_admin() -> bool:
+    user = get_current_user()
+    return bool(user and user.get("is_admin"))
+
+
+def _inject_nav_visibility_css() -> None:
+    if is_admin():
+        return
+    st.markdown(
+        """
+        <style>
+        section[data-testid="stSidebarNav"] a[href*="账号管理"],
+        section[data-testid="stSidebarNav"] li:has(a[href*="账号管理"]) {
+            display: none !important;
+        }
+        </style>
+        """,
+        unsafe_allow_html=True,
+    )
+
+
+def _render_auth_sidebar() -> None:
+    user = get_current_user()
+    if not user:
+        return
+    role = "管理员" if user.get("is_admin") else "普通用户"
+    st.sidebar.markdown("---")
+    st.sidebar.caption(f"👤 **{user['username']}** · {role}")
+    if st.sidebar.button("退出登录", key="tem_logout_btn", use_container_width=True):
+        st.session_state.pop("auth_user", None)
+        st.rerun()
+
+
+def require_login() -> None:
+    """未登录时展示登录页并 st.stop()；已登录时在侧边栏显示用户与退出。"""
+    from tem.auth import ensure_default_admin
+
+    ensure_default_admin()
+    _inject_nav_visibility_css()
+    if get_current_user():
+        _render_auth_sidebar()
+        return
+
+    st.markdown(
+        """
+        <div class="tem-login-wrap">
+            <p class="tem-login-title">诚翼畅联 · 数据管理平台</p>
+            <p class="tem-login-sub">请登录后访问看板与数据导入功能</p>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+    col_l, col_m, col_r = st.columns([1, 1.2, 1])
+    with col_m:
+        with st.form("tem_login_form", clear_on_submit=False):
+            username = st.text_input("用户名", placeholder="请输入用户名")
+            password = st.text_input("密码", type="password", placeholder="请输入密码")
+            submitted = st.form_submit_button("登录", type="primary", use_container_width=True)
+        if submitted:
+            from tem.auth import authenticate
+
+            user = authenticate(username.strip(), password)
+            if user:
+                st.session_state["auth_user"] = user.to_session_dict()
+                st.rerun()
+            st.error("用户名或密码错误，或账号已停用")
+    st.stop()
+
+
+def init_page(
+    page_title: str,
+    layout: str = "wide",
+    *,
+    admin_only: bool = False,
+    background_fx: bool = True,
+) -> None:
+    """页面入口：品牌主题 + 登录校验（可选管理员权限）。"""
+    apply_brand_theme(page_title, layout=layout, background_fx=background_fx)
+    require_login()
+    if admin_only and not is_admin():
+        st.error("需要管理员权限才能访问此页面")
+        st.stop()
 
 
 def hero(title: str, subtitle: str, meta: str | None = None) -> None:

@@ -4,6 +4,7 @@
 """
 from .fields import (
     apply_aliases,
+    apply_aliases_with_report,
     normalize_account_period,
     normalize_phone,
     SERVICE_NUMBER_ALIASES,
@@ -21,6 +22,7 @@ from .units import (
 
 __all__ = [
     "apply_aliases",
+    "apply_aliases_with_report",
     "normalize_account_period",
     "normalize_phone",
     "SERVICE_NUMBER_ALIASES",

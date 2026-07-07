@@ -10,10 +10,10 @@ _APP = Path(__file__).resolve().parents[1]
 if str(_APP) not in sys.path:
     sys.path.insert(0, str(_APP))
 
-from _shared import apply_brand_theme, query_fact, require_filters, section_tag  # noqa: E402
+from _shared import init_page, query_fact, require_filters, section_tag  # noqa: E402
 
 
-apply_brand_theme("用量分析", layout="wide")
+init_page("用量分析", layout="wide")
 section_tag("§15.3 流量 / 语音 / 短信")
 st.title("📊 用量分析")
 

@@ -12,11 +12,11 @@ for _p in (_APP, _SRC):
     if str(_p) not in sys.path:
         sys.path.insert(0, str(_p))
 
-from _shared import apply_brand_theme, get_filters, require_filters, section_tag  # noqa: E402
+from _shared import init_page, get_filters, require_filters, section_tag  # noqa: E402
 from tem.db import connect  # noqa: E402
 
 
-apply_brand_theme("事件运营", layout="wide")
+init_page("事件运营", layout="wide")
 section_tag("§15.7 按事件类型 / 动作 / 状态 统计")
 st.title("📅 事件运营")
 

@@ -13,7 +13,7 @@ from pathlib import Path
 
 import pandas as pd
 
-from ..normalize import apply_aliases, normalize_account_period, normalize_phone
+from ..normalize import apply_aliases_with_report, normalize_account_period, normalize_phone
 from .common import IngestContext, inject_platform_columns, read_any, scan_files, write_dataframe
 
 
@@ -39,8 +39,9 @@ def _classify_file_name(path: Path) -> str | None:
     return None
 
 
-def _normalize_billing_df(df: pd.DataFrame, ctx: IngestContext, table: str) -> pd.DataFrame:
-    df = apply_aliases(df, table)
+def _normalize_billing_df(df: pd.DataFrame, ctx: IngestContext, table: str) -> tuple[pd.DataFrame, dict[str, str], list[str]]:
+    source_columns = [str(c).strip() for c in df.columns]
+    df, rename = apply_aliases_with_report(df, table)
 
     if "服务号码" in df.columns:
         df["服务号码"] = df["服务号码"].map(normalize_phone)
@@ -55,7 +56,7 @@ def _normalize_billing_df(df: pd.DataFrame, ctx: IngestContext, table: str) -> p
 
     df = inject_platform_columns(df, ctx)
     df = df.dropna(subset=["服务号码"])
-    return df
+    return df, rename, source_columns
 
 
 def ingest_billing(ctx: IngestContext, files: list[Path] | None = None) -> dict[str, int]:
@@ -64,13 +65,19 @@ def ingest_billing(ctx: IngestContext, files: list[Path] | None = None) -> dict[
     paths = files or scan_files("billing", ctx)
     list_frames: list[pd.DataFrame] = []
     detail_frames: list[pd.DataFrame] = []
+    list_meta: dict[str, str | list[str]] = {"alias_map": {}, "source_columns": [], "source_file": None}
+    detail_meta: dict[str, str | list[str]] = {"alias_map": {}, "source_columns": [], "source_file": None}
 
     for p in paths:
         suffix = p.suffix.lower()
         if suffix == ".csv":
             kind = _classify_file_name(p) or "billing_list"
             df = read_any(p)
-            df = _normalize_billing_df(df, ctx, kind)
+            df, rename, src_cols = _normalize_billing_df(df, ctx, kind)
+            meta = list_meta if kind == "billing_list" else detail_meta
+            meta["alias_map"] = {**meta.get("alias_map", {}), **rename}  # type: ignore[arg-type]
+            meta["source_columns"] = src_cols
+            meta["source_file"] = p.name
             (list_frames if kind == "billing_list" else detail_frames).append(df)
             continue
 
@@ -87,9 +94,13 @@ def ingest_billing(ctx: IngestContext, files: list[Path] | None = None) -> dict[
                 # sheet 无关键字、文件也无 -> 默认按 list 处理
                 kind = "billing_list"
             sheet_df = pd.read_excel(p, sheet_name=sheet, dtype=object)
-            sheet_df = _normalize_billing_df(sheet_df, ctx, kind)
+            sheet_df, rename, src_cols = _normalize_billing_df(sheet_df, ctx, kind)
             if sheet_df.empty:
                 continue
+            meta = list_meta if kind == "billing_list" else detail_meta
+            meta["alias_map"] = {**meta.get("alias_map", {}), **rename}  # type: ignore[arg-type]
+            meta["source_columns"] = src_cols
+            meta["source_file"] = p.name
             (list_frames if kind == "billing_list" else detail_frames).append(sheet_df)
 
     counts: dict[str, int] = {"billing_list": 0, "billing_detail": 0}
@@ -97,9 +108,19 @@ def ingest_billing(ctx: IngestContext, files: list[Path] | None = None) -> dict[
         merged = pd.concat(list_frames, ignore_index=True)
         # 同号码同账期可能多条（不同账户 ID），按主键聚合实际应收
         if not merged.empty:
-            counts["billing_list"] = write_dataframe(merged, "raw_billing_list", ctx, replace_scope=True)
+            counts["billing_list"] = write_dataframe(
+                merged, "raw_billing_list", ctx, replace_scope=True,
+                alias_map=list_meta.get("alias_map") or None,
+                source_columns=list_meta.get("source_columns") or None,
+                source_file=list_meta.get("source_file"),
+            )
     if detail_frames:
         merged = pd.concat(detail_frames, ignore_index=True)
         if not merged.empty:
-            counts["billing_detail"] = write_dataframe(merged, "raw_billing_detail", ctx, replace_scope=True)
+            counts["billing_detail"] = write_dataframe(
+                merged, "raw_billing_detail", ctx, replace_scope=True,
+                alias_map=detail_meta.get("alias_map") or None,
+                source_columns=detail_meta.get("source_columns") or None,
+                source_file=detail_meta.get("source_file"),
+            )
     return counts

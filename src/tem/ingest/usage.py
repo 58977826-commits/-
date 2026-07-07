@@ -6,7 +6,7 @@ from pathlib import Path
 import pandas as pd
 
 from ..normalize import (
-    apply_aliases,
+    apply_aliases_with_report,
     mb_to_gb,
     normalize_account_period,
     normalize_phone,
@@ -15,8 +15,9 @@ from ..normalize import (
 from .common import IngestContext, inject_platform_columns, read_any, scan_files, write_dataframe
 
 
-def _normalize_usage_df(df: pd.DataFrame, ctx: IngestContext) -> pd.DataFrame:
-    df = apply_aliases(df, "usage")
+def _normalize_usage_df(df: pd.DataFrame, ctx: IngestContext) -> tuple[pd.DataFrame, dict[str, str], list[str]]:
+    source_columns = [str(c).strip() for c in df.columns]
+    df, rename = apply_aliases_with_report(df, "usage")
 
     if "服务号码" in df.columns:
         df["服务号码"] = df["服务号码"].map(normalize_phone)
@@ -59,7 +60,7 @@ def _normalize_usage_df(df: pd.DataFrame, ctx: IngestContext) -> pd.DataFrame:
     df = inject_platform_columns(df, ctx)
     df = df.dropna(subset=["服务号码"])
     if df.empty:
-        return df
+        return df, rename, source_columns
 
     group_keys = ["客户ID", "项目ID", "账期", "服务号码"]
     agg_map = {
@@ -88,7 +89,7 @@ def _normalize_usage_df(df: pd.DataFrame, ctx: IngestContext) -> pd.DataFrame:
     agg_map = {k: v for k, v in agg_map.items() if k in df.columns}
     df = df.groupby(group_keys, dropna=False, as_index=False).agg(agg_map)
 
-    return df
+    return df, rename, source_columns
 
 
 def ingest_usage(ctx: IngestContext, files: list[Path] | None = None) -> int:
@@ -97,14 +98,30 @@ def ingest_usage(ctx: IngestContext, files: list[Path] | None = None) -> int:
     if not paths:
         return 0
     frames: list[pd.DataFrame] = []
+    alias_map: dict[str, str] = {}
+    source_columns: list[str] = []
+    source_file: str | None = None
     for p in paths:
         df = read_any(p)
         if isinstance(df, dict):
             for sheet_df in df.values():
-                frames.append(_normalize_usage_df(sheet_df, ctx))
+                norm, rename, src_cols = _normalize_usage_df(sheet_df, ctx)
+                frames.append(norm)
+                alias_map.update(rename)
+                source_columns = src_cols
+                source_file = p.name
         else:
-            frames.append(_normalize_usage_df(df, ctx))
+            norm, rename, src_cols = _normalize_usage_df(df, ctx)
+            frames.append(norm)
+            alias_map.update(rename)
+            source_columns = src_cols
+            source_file = p.name
     merged = pd.concat([f for f in frames if not f.empty], ignore_index=True) if frames else pd.DataFrame()
     if merged.empty:
         return 0
-    return write_dataframe(merged, "raw_usage", ctx, replace_scope=True)
+    return write_dataframe(
+        merged, "raw_usage", ctx, replace_scope=True,
+        alias_map=alias_map or None,
+        source_columns=source_columns or None,
+        source_file=source_file,
+    )

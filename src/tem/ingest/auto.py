@@ -288,4 +288,5 @@ def auto_ingest_files(files: list[Path], ctx: IngestContext) -> dict[str, Any]:
     return {
         "file_reports": file_reports,
         "ingest_counts": counts,
+        "gate_reports": [r.to_dict() for r in ctx.gate_reports],
     }

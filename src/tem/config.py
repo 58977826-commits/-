@@ -22,6 +22,11 @@ def _load_yaml(path: Path) -> dict[str, Any]:
         return yaml.safe_load(f) or {}
 
 
+def load_yaml(path: Path) -> dict[str, Any]:
+    """加载 YAML 配置文件（供 meta 等模块使用）。"""
+    return _load_yaml(path)
+
+
 @dataclass
 class ClientProject:
     客户ID: str
@@ -179,8 +184,38 @@ class Rules:
         return int(self.raw.get("report", {}).get("top_n", 20))
 
 
+@dataclass
+class FieldMaps:
+    """field_maps.yaml：Import Gate + 增量字段别名。"""
+
+    raw: dict[str, Any]
+
+    @classmethod
+    def load(cls, path: Path | None = None) -> "FieldMaps":
+        path = path or CONFIG_DIR / "field_maps.yaml"
+        if not path.exists():
+            return cls(raw={"import_gate": {"mode": "warn", "tables": {}}, "field_aliases": {}})
+        return cls(raw=_load_yaml(path))
+
+    def gate_mode(self) -> str:
+        return str(self.raw.get("import_gate", {}).get("mode", "strict"))
+
+    def table_spec(self, ingest_table: str) -> dict[str, Any]:
+        return dict(self.raw.get("import_gate", {}).get("tables", {}).get(ingest_table, {}))
+
+    def extra_field_aliases(self, ingest_table: str) -> dict[str, list[str]]:
+        return dict(self.raw.get("field_aliases", {}).get(ingest_table, {}) or {})
+
+    def extra_service_number_aliases(self, ingest_table: str) -> list[str]:
+        return list(self.raw.get("service_number_aliases", {}).get(ingest_table, []) or [])
+
+    def extra_account_period_aliases(self) -> list[str]:
+        return list(self.raw.get("account_period_aliases", []) or [])
+
+
 _settings_cache: Settings | None = None
 _rules_cache: Rules | None = None
+_field_maps_cache: FieldMaps | None = None
 
 
 def get_settings() -> Settings:
@@ -197,8 +232,22 @@ def get_rules() -> Rules:
     return _rules_cache
 
 
+def get_field_maps() -> FieldMaps:
+    global _field_maps_cache
+    if _field_maps_cache is None:
+        _field_maps_cache = FieldMaps.load()
+    return _field_maps_cache
+
+
 def reset_cache() -> None:
     """单元测试 / 切换配置时使用。"""
-    global _settings_cache, _rules_cache
+    global _settings_cache, _rules_cache, _field_maps_cache
     _settings_cache = None
     _rules_cache = None
+    _field_maps_cache = None
+
+
+def reset_field_maps_cache() -> None:
+    """仅刷新 field_maps.yaml 缓存（不影响 Settings / DB 路径）。"""
+    global _field_maps_cache
+    _field_maps_cache = None
