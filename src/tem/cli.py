@@ -6,6 +6,7 @@
   tem build  --客户 X --项目 Y --账期 YYYYMM   生成 fact_tem_monthly
   tem export --客户 X --项目 Y --账期 YYYYMM   导出月度 Excel 报表
   tem run    --客户 X --项目 Y --账期 YYYYMM   依次执行 ingest + build + export
+  tem purge  --客户 X --项目 Y [--账期 YYYYMM]  删除已导入数据（调试/重导前清理）
   tem status                                  查看 DuckDB 库与各 raw_* 表行数
 """
 from __future__ import annotations
@@ -45,6 +46,16 @@ def cmd_sync_diff() -> None:
 
     n = sync_project_diff_from_config(verbose=True)
     click.echo(f"[sync-diff] 已同步 {n} 条规则到 meta_project_diff")
+
+
+@cli.command("sync-emos")
+def cmd_sync_emos() -> None:
+    """从 config/emos/*.yaml 同步 EMOS 知识库到 DuckDB。"""
+    from .emos.sync import sync_emos_from_config
+
+    counts = sync_emos_from_config(verbose=True)
+    total = sum(counts.values())
+    click.echo(f"[sync-emos] 共同步 {total} 条记录")
 
 
 @cli.command("init-db")
@@ -145,6 +156,76 @@ def cmd_run(客户ID: str, 项目ID: str, 账期: str | None) -> None:
     click.echo(f"[run/build] fact_tem_monthly: {n_fact}")
     out = export_monthly_reports(客户ID, 项目ID, 账期)
     click.echo(f"[run/export] {out}")
+
+
+@cli.command("purge")
+@click.option("--客户", "客户ID", required=True, help="客户ID")
+@click.option("--项目", "项目ID", required=False, help="项目ID；不传则删除该客户下全部项目")
+@click.option("--账期", "账期", required=False, help="YYYYMM；仅项目级删除时有效")
+@click.option("--include-project-tables", is_flag=True,
+              help="项目级：同时删除 raw_asset / raw_employee / raw_event")
+@click.option("--delete-raw-files", is_flag=True,
+              help="同时删除 data/raw/ 下归档 Excel")
+@click.option("--delete-output-files", is_flag=True,
+              help="同时删除 data/output/ 下 TEM 月报 Excel")
+@click.option("--yes", is_flag=True, help="跳过确认提示")
+def cmd_purge(
+    客户ID: str,
+    项目ID: str | None,
+    账期: str | None,
+    include_project_tables: bool,
+    delete_raw_files: bool,
+    delete_output_files: bool,
+    yes: bool,
+) -> None:
+    """删除指定范围的导入数据。不传 --项目 时删除整个客户。"""
+    from .data.purge import (
+        preview_purge,
+        preview_purge_client,
+        purge_client_data,
+        purge_import_data,
+    )
+
+    if not 项目ID:
+        if not yes:
+            preview = preview_purge_client(客户ID)
+            click.echo(f"[purge] 将删除客户 {客户ID} 全部数据，共 {sum(preview.values())} 行")
+            for table, n in preview.items():
+                click.echo(f"  {table}: {n}")
+            if not click.confirm("确认执行？"):
+                raise click.Abort()
+        result = purge_client_data(
+            客户ID,
+            delete_raw_files=delete_raw_files,
+            delete_output_files=delete_output_files,
+        )
+        click.echo(f"[purge] 已删除客户 {客户ID} 共 {result['total_rows']} 行")
+        for table, n in result["deleted_rows"].items():
+            click.echo(f"  {table}: {n}")
+        return
+
+    include_proj = include_project_tables or not 账期
+    if not yes:
+        preview = preview_purge(
+            客户ID, 项目ID, 账期,
+            include_project_tables=include_proj,
+        )
+        scope = f"{客户ID}/{项目ID}" + (f"/{账期}" if 账期 else "/全部账期")
+        click.echo(f"[purge] 将删除 {scope}，共 {sum(preview.values())} 行")
+        for table, n in preview.items():
+            click.echo(f"  {table}: {n}")
+        if not click.confirm("确认执行？"):
+            raise click.Abort()
+
+    result = purge_import_data(
+        客户ID, 项目ID, 账期,
+        include_project_tables=include_proj,
+        delete_raw_files=delete_raw_files,
+        delete_output_files=delete_output_files,
+    )
+    click.echo(f"[purge] 已删除 {result['total_rows']} 行")
+    for table, n in result["deleted_rows"].items():
+        click.echo(f"  {table}: {n}")
 
 
 def main() -> None:  # pragma: no cover

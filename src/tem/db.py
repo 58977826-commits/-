@@ -10,7 +10,7 @@ from .config import REPO_ROOT, get_settings
 
 
 SQL_DIR = REPO_ROOT / "sql"
-DDL_FILES = ["001_raw_tables.sql", "002_fact_tem_monthly.sql", "003_views.sql", "004_meta_tables.sql", "005_app_users.sql"]
+DDL_FILES = ["001_raw_tables.sql", "002_fact_tem_monthly.sql", "003_views.sql", "004_meta_tables.sql", "005_app_users.sql", "006_emos_tables.sql"]
 
 
 def get_connection(read_only: bool = False) -> duckdb.DuckDBPyConnection:
@@ -44,6 +44,12 @@ def init_db(verbose: bool = True) -> None:
     from .auth.users import ensure_default_admin
     if ensure_default_admin() and verbose:
         print("[init_db] created default admin account (admin / admin)")
+    from .emos.sync import sync_emos_from_config
+    try:
+        sync_emos_from_config(verbose=verbose)
+    except Exception as e:  # noqa: BLE001
+        if verbose:
+            print(f"[init_db] sync-emos skipped: {e}")
 
 
 def list_tables() -> list[str]:

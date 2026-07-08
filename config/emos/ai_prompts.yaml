@@ -1,0 +1,81 @@
+prompts:
+- PromptID: PROMPT-REVIEW
+  场景: 风险审查
+  模板名称: EMOS 项目落地包审查
+  模板正文: '你是 MMS/EMOS 项目落地顾问。基于以下上下文审查项目落地包是否完整。
+
+
+    ## 项目画像
+
+    {profile_summary}
+
+
+    ## 推荐服务项
+
+    {service_items}
+
+
+    ## 推荐组件
+
+    {components_table}
+
+
+    ## 项目差异与待确认
+
+    {diffs_table}
+
+
+    ## 请审查并输出
+
+    1. 服务范围是否完整？
+
+    2. 是否漏掉关键流程或数据字段？
+
+    3. 哪些风险需要前置？
+
+    4. 哪些差异必须客户/运营商确认？
+
+    5. 哪些经验可沉淀为知识卡片？
+
+
+    请用 Markdown 输出，每条建议注明理由。'
+- PromptID: PROMPT-SOP
+  场景: 流程生成
+  模板名称: 项目版SOP初稿
+  模板正文: '基于标准组件 {component_id} ({component_name})，为以下项目生成项目版 SOP 初稿。
+
+
+    项目：{client_name}
+
+    项目类型：{project_types}
+
+    关键变量：{variables}
+
+
+    请输出：目的、角色、步骤、输入输出、待确认事项。'
+- PromptID: PROMPT-REFLUX
+  场景: 经验回流
+  模板名称: 复盘知识卡片提炼
+  模板正文: '根据项目复盘材料提炼 EMOS 知识卡片。
+
+
+    来源项目：{source_project}
+
+    差异与问题：{issues}
+
+
+    请输出：主题、核心结论、适用场景、关联组件、AI使用方式。'
+- PromptID: PROMPT-MONTHLY
+  场景: 月报摘要
+  模板名称: 客户月报管理价值摘要
+  模板正文: '将以下 TEM/运营数据转化为客户管理层可读摘要。
+
+
+    客户：{client_name}
+
+    账期：{period}
+
+    关键指标：{metrics}
+
+
+    请输出：本月亮点、需关注风险、下月建议（各3条以内）。'

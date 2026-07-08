@@ -152,25 +152,25 @@ _GLOBAL_CSS = f"""
     color: {BRAND_RED};
   }}
 
-  /* ====== 侧边栏导航：整体边框 + 条目浅灰底 ====== */
-  section[data-testid="stSidebarNav"] ul {{
-    border: 1px solid {BRAND_LINE};
-    border-radius: 12px;
-    padding: 6px;
+  /* ====== 侧边栏导航：分组底框 + 条目浅灰底 ====== */
+  section[data-testid="stSidebar"] ul {{
+    border: none;
+    border-radius: 0;
+    padding: 0;
     margin: 0.25rem 0 1rem 0;
-    background: rgba(255, 255, 255, 0.72);
-    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
+    background: transparent;
+    box-shadow: none;
     display: flex;
     flex-direction: column;
-    gap: 4px;
+    gap: 10px;
     list-style: none;
   }}
-  section[data-testid="stSidebarNav"] ul > li {{
+  section[data-testid="stSidebar"] ul > li {{
     margin: 0;
     padding: 0;
     list-style: none;
   }}
-  section[data-testid="stSidebarNav"] a {{
+  section[data-testid="stSidebar"] ul a {{
     border-radius: 8px !important;
     transition: all 0.16s ease;
     background: {BRAND_GREY} !important;
@@ -181,54 +181,126 @@ _GLOBAL_CSS = f"""
     box-sizing: border-box;
     border: 1px solid transparent;
   }}
-  section[data-testid="stSidebarNav"] a[aria-current="page"] {{
+  section[data-testid="stSidebar"] ul a[aria-current="page"] {{
     background: linear-gradient(90deg, {BRAND_RED_SOFT} 0%, rgba(255, 237, 239, 0.55) 100%) !important;
     color: {BRAND_RED} !important;
     font-weight: 600;
     box-shadow: inset 3px 0 0 {BRAND_RED};
     border-color: rgba(230, 0, 18, 0.12);
   }}
-  section[data-testid="stSidebarNav"] a:hover {{
+  section[data-testid="stSidebar"] ul a:hover {{
     color: {BRAND_RED} !important;
     transform: translateX(2px);
     background: #EEEEF0 !important;
   }}
-  section[data-testid="stSidebarNav"] a[aria-current="page"]:hover {{
+  section[data-testid="stSidebar"] ul a[aria-current="page"]:hover {{
     background: linear-gradient(90deg, {BRAND_RED_SOFT} 0%, rgba(255, 237, 239, 0.65) 100%) !important;
   }}
 
-  /* ====== 首页导航：诚翼畅联（醒目）+ 数据管理平台 ====== */
-  section[data-testid="stSidebarNav"] ul > li:first-child a {{
+  /* 导航分组底框：首页 / 数据 / 分析 / EMOS / 系统 */
+  section[data-testid="stSidebar"] ul > li:nth-child(1) {{
+    border: 1px solid {BRAND_LINE};
+    border-radius: 12px;
+    padding: 6px;
+    background: rgba(255, 255, 255, 0.72);
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
+  }}
+  section[data-testid="stSidebar"] ul > li:nth-child(2),
+  section[data-testid="stSidebar"] ul > li:nth-child(3) {{
+    border-left: 1px solid {BRAND_LINE};
+    border-right: 1px solid {BRAND_LINE};
+    padding-left: 6px;
+    padding-right: 6px;
+    background: rgba(255, 255, 255, 0.72);
+  }}
+  section[data-testid="stSidebar"] ul > li:nth-child(2) {{
+    border-top: 1px solid {BRAND_LINE};
+    border-radius: 12px 12px 0 0;
+    padding-top: 6px;
+    padding-bottom: 2px;
+  }}
+  section[data-testid="stSidebar"] ul > li:nth-child(3) {{
+    border-bottom: 1px solid {BRAND_LINE};
+    border-radius: 0 0 12px 12px;
+    padding-top: 2px;
+    padding-bottom: 6px;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
+  }}
+  section[data-testid="stSidebar"] ul > li:nth-child(4) {{
+    border: 1px solid {BRAND_LINE};
+    border-bottom: none;
+    border-radius: 12px 12px 0 0;
+    padding: 6px 6px 2px 6px;
+    background: rgba(255, 255, 255, 0.72);
+  }}
+  section[data-testid="stSidebar"] ul > li:nth-child(5),
+  section[data-testid="stSidebar"] ul > li:nth-child(6),
+  section[data-testid="stSidebar"] ul > li:nth-child(7),
+  section[data-testid="stSidebar"] ul > li:nth-child(8) {{
+    border-left: 1px solid {BRAND_LINE};
+    border-right: 1px solid {BRAND_LINE};
+    padding: 2px 6px;
+    background: rgba(255, 255, 255, 0.72);
+  }}
+  section[data-testid="stSidebar"] ul > li:nth-child(9) {{
+    border: 1px solid {BRAND_LINE};
+    border-top: none;
+    border-radius: 0 0 12px 12px;
+    padding: 2px 6px 6px 6px;
+    background: rgba(255, 255, 255, 0.72);
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
+  }}
+  section[data-testid="stSidebar"] ul > li:nth-child(10) {{
+    border: 1px solid {BRAND_LINE};
+    border-bottom: none;
+    border-radius: 12px 12px 0 0;
+    padding: 6px 6px 2px 6px;
+    background: rgba(255, 255, 255, 0.72);
+  }}
+  section[data-testid="stSidebar"] ul > li:nth-child(11),
+  section[data-testid="stSidebar"] ul > li:nth-child(12) {{
+    border-left: 1px solid {BRAND_LINE};
+    border-right: 1px solid {BRAND_LINE};
+    padding: 2px 6px;
+    background: rgba(255, 255, 255, 0.72);
+  }}
+  section[data-testid="stSidebar"] ul > li:nth-child(13) {{
+    border: 1px solid {BRAND_LINE};
+    border-top: none;
+    border-radius: 0 0 12px 12px;
+    padding: 2px 6px 6px 6px;
+    background: rgba(255, 255, 255, 0.72);
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
+  }}
+  section[data-testid="stSidebar"] ul > li:nth-child(14) {{
+    border: 1px solid {BRAND_LINE};
+    border-bottom: none;
+    border-radius: 12px 12px 0 0;
+    padding: 6px 6px 2px 6px;
+    background: rgba(255, 255, 255, 0.72);
+  }}
+  section[data-testid="stSidebar"] ul > li:nth-child(15) {{
+    border: 1px solid {BRAND_LINE};
+    border-top: none;
+    border-radius: 0 0 12px 12px;
+    padding: 2px 6px 6px 6px;
+    background: rgba(255, 255, 255, 0.72);
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
+  }}
+
+  /* ====== 首页导航：诚翼畅联数据平台 ====== */
+  section[data-testid="stSidebar"] ul > li:first-child a[data-testid="stSidebarNavLink"],
+  section[data-testid="stSidebar"] ul > li:first-child a {{
     white-space: normal !important;
     height: auto !important;
-    min-height: 2.6rem;
-    align-items: flex-start !important;
-    padding-top: 0.35rem !important;
-    padding-bottom: 0.35rem !important;
+    min-height: 2.4rem;
+    align-items: center !important;
+    font-weight: 800 !important;
+    color: {BRAND_RED} !important;
+    letter-spacing: 0.02em;
   }}
-  section[data-testid="stSidebarNav"] ul > li:first-child a span {{
-    font-size: 0 !important;
-    line-height: 1.45 !important;
-  }}
-  section[data-testid="stSidebarNav"] ul > li:first-child a span::before {{
-    content: "诚翼畅联";
-    font-size: 0.95rem;
-    font-weight: 800;
-    color: {BRAND_RED};
-    letter-spacing: 0.04em;
-  }}
-  section[data-testid="stSidebarNav"] ul > li:first-child a span::after {{
-    content: "数据管理平台";
-    font-size: 0.82rem;
-    font-weight: 500;
-    color: {BRAND_INK_SOFT};
-  }}
-  section[data-testid="stSidebarNav"] ul > li:first-child a[aria-current="page"] span::before {{
-    color: {BRAND_RED_DARK};
-  }}
-  section[data-testid="stSidebarNav"] ul > li:first-child a[aria-current="page"] span::after {{
-    color: {BRAND_INK};
-    font-weight: 600;
+  section[data-testid="stSidebar"] ul > li:first-child a[aria-current="page"] {{
+    color: {BRAND_RED_DARK} !important;
   }}
 
   /* ====== 主按钮：联通红 + 高级光感 ====== */
@@ -641,9 +713,28 @@ def _inject_nav_visibility_css() -> None:
     st.markdown(
         """
         <style>
-        section[data-testid="stSidebarNav"] a[href*="账号管理"],
-        section[data-testid="stSidebarNav"] li:has(a[href*="账号管理"]) {
+        section[data-testid="stSidebar"] ul a[href*="账号管理"],
+        section[data-testid="stSidebar"] ul li:has(a[href*="账号管理"]),
+        section[data-testid="stSidebar"] ul a[href*="数据删除"],
+        section[data-testid="stSidebar"] ul li:has(a[href*="数据删除"]),
+        section[data-testid="stSidebar"] ul a[href*="项目差异维护"],
+        section[data-testid="stSidebar"] ul li:has(a[href*="项目差异维护"]) {
             display: none !important;
+        }
+        /* 非管理员：EMOS 组在「知识回流」处收底 */
+        section[data-testid="stSidebar"] ul > li:nth-child(12) {
+            border-bottom: 1px solid #E5E5EA !important;
+            border-radius: 0 0 12px 12px !important;
+            padding-bottom: 6px !important;
+            box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04) !important;
+        }
+        section[data-testid="stSidebar"] ul > li:nth-child(13) {
+            border: none !important;
+            padding: 0 !important;
+            margin: 0 !important;
+            box-shadow: none !important;
+            height: 0 !important;
+            overflow: hidden !important;
         }
         </style>
         """,
@@ -755,7 +846,7 @@ def require_filters() -> bool:
     """子页通用：未选客户/项目/账期时给出友好提示。"""
     客户ID, 项目ID, 账期 = get_filters()
     if not (客户ID and 项目ID and 账期):
-        st.info("请回到 **诚翼畅联数据管理平台** 首页选择客户/项目/账期；或在 **📤 数据导入** 页上传数据后自动定位。")
+        st.info("请回到 **诚翼畅联数据平台** 首页选择客户/项目/账期；或在 **数据导入** 页上传数据后自动定位。")
         return False
     meta = f"客户 {客户ID} · {st.session_state.get('客户名称') or ''}　/　项目 {项目ID} · {st.session_state.get('项目名称') or ''}　/　账期 {账期}"
     st.caption(meta)

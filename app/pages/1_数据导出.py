@@ -16,9 +16,9 @@ from _shared import init_page, get_filters, require_filters, section_tag  # noqa
 from tem.reports import export_monthly_reports  # noqa: E402
 
 
-init_page("报表导出", layout="wide")
+init_page("数据导出", layout="wide")
 section_tag("§15 月度报表打包")
-st.title("⬇️ 月度报表导出")
+st.title("⬇️ 数据导出")
 st.caption("一键生成包含七张管理报表的 Excel 文件，落到 data/output/ 目录")
 
 if not require_filters():
